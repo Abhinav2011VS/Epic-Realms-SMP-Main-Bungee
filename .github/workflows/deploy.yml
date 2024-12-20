@@ -41,7 +41,7 @@ jobs:
             RewriteRule ^/bungee(.*)$ http://localhost:25577%{REQUEST_URI} [P]
           </VirtualHost>" | sudo tee /etc/apache2/sites-available/ersmp.conf
           sudo a2ensite ersmp.conf
-          sudo systemctl reload apache2
+          sudo systemctl restart apache2 || sudo systemctl start apache2
 
       - name: Set Up Website
         run: |
