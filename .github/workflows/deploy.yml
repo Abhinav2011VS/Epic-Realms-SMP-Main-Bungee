@@ -1,0 +1,33 @@
+name: Deploy Minecraft Server and Website
+
+on:
+  push:
+    branches:
+      - main  # Trigger the workflow on pushes to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up FTP client
+        run: |
+          sudo apt-get install lftp -y  # Install the FTP client
+
+      - name: Upload Minecraft Server Files (FTP transfer)
+        run: |
+          # Upload all Minecraft server files to the server
+          lftp -e "mirror -R ./minecraft-server /home/ubuntu/minecraft-server; quit" ftp://ftpuser:ftppassword@your-server-ip
+
+      - name: Upload Apache Website Files (FTP transfer)
+        run: |
+          # Upload all website files to the Apache directory
+          lftp -e "mirror -R ./website /var/www/html; quit" ftp://ftpuser:ftppassword@your-server-ip
+
+      - name: Start Minecraft Server (Manually executed on the server)
+        run: |
+          echo "Deployment Complete! Please manually start the Minecraft server by SSHing into the server and running:"
+          echo "cd /home/ubuntu/minecraft-server && ./start.sh"
