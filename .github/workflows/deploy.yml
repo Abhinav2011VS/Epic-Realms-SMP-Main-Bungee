@@ -71,6 +71,7 @@ jobs:
                 address: localhost:25565
                 restricted: false" > config.yml
           nohup java -jar BungeeCord.jar &
+          sleep 30
 
       - name: Verify Deployment
         run: |
