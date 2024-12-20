@@ -52,7 +52,9 @@ jobs:
       - name: Deploy BungeeCord
         run: |
           mkdir -p bungee
-          cp bungee/BungeeCord.jar bungee/
+          if [ ! -f bungee/BungeeCord.jar ]; then
+            cp bungee/BungeeCord.jar bungee/
+          fi
           cd bungee
           echo "server:
             port: 25577
