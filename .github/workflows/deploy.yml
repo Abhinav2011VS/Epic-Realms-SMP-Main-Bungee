@@ -52,8 +52,8 @@ jobs:
       - name: Deploy BungeeCord
         run: |
           mkdir -p bungee
+          cp bungee/BungeeCord.jar bungee/
           cd bungee
-          mv ../bungee/BungeeCord.jar .
           echo "server:
             port: 25577
             ip_forward: true
