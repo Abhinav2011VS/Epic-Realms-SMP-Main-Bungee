@@ -1,33 +1,75 @@
-name: Deploy Minecraft Server and Website
+name: Deploy BungeeCord and Website
 
 on:
   push:
     branches:
-      - master  # Trigger the workflow on pushes to the 'main' branch
+      - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  setup-deployment:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Set up FTP client
-        run: |
-          sudo apt-get install lftp -y  # Install the FTP client
+      - name: Set up Java 21
+        uses: actions/setup-java@v3
+        with:
+          java-version: '21'
+          distribution: 'temurin'
 
-      - name: Upload Minecraft Server Files (FTP transfer)
+      - name: Install Dependencies
         run: |
-          # Upload all Minecraft server files to the server
-          lftp -e "mirror -R ./minecraft-server /home/ubuntu/minecraft-server; quit" ftp://ftpuser:ftppassword@your-server-ip
+          sudo apt update
+          sudo apt install -y apache2 openjdk-21-jre-headless
 
-      - name: Upload Apache Website Files (FTP transfer)
+      - name: Configure Apache for ersmp.net
         run: |
-          # Upload all website files to the Apache directory
-          lftp -e "mirror -R ./website /var/www/html; quit" ftp://ftpuser:ftppassword@your-server-ip
+          sudo a2enmod proxy proxy_http proxy_wstunnel rewrite
+          echo "<VirtualHost *:80>
+            ServerName ersmp.net
+            ServerAlias *.ersmp.net
+            DocumentRoot /var/www/html
+          
+            ProxyPass /bungee ws://localhost:25577/
+            ProxyPassReverse /bungee ws://localhost:25577/
+          
+            RewriteEngine On
+            RewriteCond %{HTTP_HOST} ^(.*)\.ersmp\.net$
+            RewriteRule ^/bungee(.*)$ http://localhost:25577%{REQUEST_URI} [P]
+          </VirtualHost>" | sudo tee /etc/apache2/sites-available/ersmp.conf
+          sudo a2ensite ersmp.conf
+          sudo systemctl reload apache2
 
-      - name: Start Minecraft Server (Manually executed on the server)
+      - name: Set Up Website
         run: |
-          echo "Deployment Complete! Please manually start the Minecraft server by SSHing into the server and running:"
-          echo "cd /home/ubuntu/minecraft-server && ./start.sh"
+          mkdir -p /var/www/html
+          cp -r website/* /var/www/html
+
+      - name: Deploy BungeeCord
+        run: |
+          mkdir -p bungee
+          cd bungee
+          mv ../bungee/BungeeCord.jar .
+          echo "server:
+            port: 25577
+            ip_forward: true
+            permissions:
+              default:
+                - bungeecord.command.server
+            listeners:
+              - query_port: 25577
+                query_enabled: true
+                host: 0.0.0.0:25577
+            servers:
+              lobby:
+                address: localhost:25565
+                restricted: false" > config.yml
+          nohup java -jar BungeeCord.jar &
+
+      - name: Verify Deployment
+        run: |
+          curl -I http://ersmp.net
+          curl -I http://lobby.ersmp.net
