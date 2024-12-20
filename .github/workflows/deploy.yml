@@ -3,7 +3,7 @@ name: Deploy BungeeCord and Website
 on:
   push:
     branches:
-      - main
+      - master
   workflow_dispatch:
 
 jobs:
