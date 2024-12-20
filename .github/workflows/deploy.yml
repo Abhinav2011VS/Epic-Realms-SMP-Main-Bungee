@@ -45,8 +45,9 @@ jobs:
 
       - name: Set Up Website
         run: |
-          mkdir -p /var/www/html
-          cp -r website/* /var/www/html
+          sudo mkdir -p /var/www/html
+          sudo cp -r website/* /var/www/html
+          sudo chown -R www-data:www-data /var/www/html
 
       - name: Deploy BungeeCord
         run: |
